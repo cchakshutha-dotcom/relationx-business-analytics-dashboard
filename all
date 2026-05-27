@@ -1,0 +1,309 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ---------------------------------------------------------
+# LOAD EXCEL DATASET
+# ---------------------------------------------------------
+
+file_path = "sales_data_sample.xlsx"
+
+df = pd.read_excel(file_path)
+
+# ---------------------------------------------------------
+# CLEAN COLUMN NAMES
+# ---------------------------------------------------------
+
+df.columns = df.columns.str.lower().str.replace(' ', '_')
+
+# ---------------------------------------------------------
+# HANDLE MISSING VALUES
+# ---------------------------------------------------------
+
+for col in df.select_dtypes(include='number').columns:
+    df[col] = df[col].fillna(df[col].mean())
+
+for col in df.select_dtypes(include='object').columns:
+    df[col] = df[col].fillna(df[col].mode()[0])
+
+# ---------------------------------------------------------
+# CREATE BIGGER DASHBOARD
+# ---------------------------------------------------------
+
+fig, axes = plt.subplots(4, 4, figsize=(42, 28))
+
+fig.suptitle(
+    "BUSINESS RELATIONSHIP ANALYTICS DASHBOARD",
+    fontsize=24,
+    y=0.99
+)
+
+# =========================================================
+# GRAPH 1 : MONTHLY SALES TREND
+# =========================================================
+
+monthly_sales = df.groupby('month_id')['sales'].sum()
+
+axes[0, 0].plot(
+    monthly_sales.index,
+    monthly_sales.values,
+    marker='o',
+    linewidth=3
+)
+
+axes[0, 0].set_title("Monthly Sales Trend", fontsize=16)
+
+# =========================================================
+# GRAPH 2 : YEARLY SALES
+# =========================================================
+
+yearly_sales = df.groupby('year_id')['sales'].sum()
+
+axes[0, 1].bar(
+    yearly_sales.index.astype(str),
+    yearly_sales.values
+)
+
+axes[0, 1].set_title("Yearly Sales", fontsize=16)
+
+# =========================================================
+# GRAPH 3 : PRODUCT LINE SALES
+# =========================================================
+
+product_sales = (
+    df.groupby('productline')['sales']
+    .sum()
+    .sort_values(ascending=False)
+)
+
+axes[0, 2].bar(
+    product_sales.index,
+    product_sales.values
+)
+
+axes[0, 2].set_title("Product Line Sales", fontsize=16)
+
+axes[0, 2].tick_params(axis='x', rotation=35)
+
+# =========================================================
+# GRAPH 4 : COUNTRY SALES
+# =========================================================
+
+country_sales = (
+    df.groupby('country')['sales']
+    .sum()
+    .sort_values(ascending=False)
+    .head(5)
+)
+
+axes[0, 3].pie(
+    country_sales.values,
+    labels=country_sales.index,
+    autopct='%1.1f%%'
+)
+
+axes[0, 3].set_title("Country Sales", fontsize=16)
+
+# =========================================================
+# GRAPH 5 : CITY SALES
+# =========================================================
+
+city_sales = (
+    df.groupby('city')['sales']
+    .sum()
+    .sort_values(ascending=False)
+    .head(10)
+)
+
+axes[1, 0].bar(
+    city_sales.index,
+    city_sales.values
+)
+
+axes[1, 0].set_title("Top City Sales", fontsize=16)
+
+axes[1, 0].tick_params(axis='x', rotation=35)
+
+# =========================================================
+# GRAPH 6 : DEAL SIZE RELATION
+# =========================================================
+
+deal_counts = df['dealsize'].value_counts()
+
+axes[1, 1].pie(
+    deal_counts.values,
+    labels=deal_counts.index,
+    autopct='%1.1f%%'
+)
+
+axes[1, 1].set_title("Deal Size Relation", fontsize=16)
+
+# =========================================================
+# GRAPH 7 : ORDER STATUS
+# =========================================================
+
+status_counts = df['status'].value_counts()
+
+axes[1, 2].bar(
+    status_counts.index,
+    status_counts.values
+)
+
+axes[1, 2].set_title("Order Status", fontsize=16)
+
+axes[1, 2].tick_params(axis='x', rotation=35)
+
+# =========================================================
+# GRAPH 8 : SALES DISTRIBUTION
+# =========================================================
+
+axes[1, 3].hist(
+    df['sales'],
+    bins=20
+)
+
+axes[1, 3].set_title("Sales Distribution", fontsize=16)
+
+# =========================================================
+# GRAPH 9 : QUANTITY ORDERED
+# =========================================================
+
+axes[2, 0].hist(
+    df['quantityordered'],
+    bins=20
+)
+
+axes[2, 0].set_title("Quantity Ordered", fontsize=16)
+
+# =========================================================
+# GRAPH 10 : PRICE EACH DISTRIBUTION
+# =========================================================
+
+axes[2, 1].hist(
+    df['priceeach'],
+    bins=20
+)
+
+axes[2, 1].set_title("Price Each Distribution", fontsize=16)
+
+# =========================================================
+# GRAPH 11 : TERRITORY RELATION
+# =========================================================
+
+territory_counts = df['territory'].value_counts()
+
+axes[2, 2].pie(
+    territory_counts.values,
+    labels=territory_counts.index,
+    autopct='%1.1f%%'
+)
+
+axes[2, 2].set_title("Territory Relation", fontsize=16)
+
+# =========================================================
+# GRAPH 12 : TOP CUSTOMERS
+# =========================================================
+
+customer_sales = (
+    df.groupby('customername')['sales']
+    .sum()
+    .sort_values(ascending=False)
+    .head(10)
+)
+
+axes[2, 3].bar(
+    customer_sales.index,
+    customer_sales.values
+)
+
+axes[2, 3].set_title("Top Customers", fontsize=16)
+
+axes[2, 3].tick_params(axis='x', rotation=90)
+
+# =========================================================
+# GRAPH 13 : CORRELATION HEATMAP
+# =========================================================
+
+numeric_df = df.select_dtypes(include='number')
+
+sns.heatmap(
+    numeric_df.corr(),
+    ax=axes[3, 0],
+    cmap='coolwarm',
+    annot=False
+)
+
+axes[3, 0].set_title("Correlation Heatmap", fontsize=16)
+
+# =========================================================
+# GRAPH 14 : PRODUCT VS QUANTITY
+# =========================================================
+
+quantity_relation = (
+    df.groupby('productline')['quantityordered']
+    .sum()
+)
+
+axes[3, 1].bar(
+    quantity_relation.index,
+    quantity_relation.values
+)
+
+axes[3, 1].set_title("Product vs Quantity", fontsize=16)
+
+axes[3, 1].tick_params(axis='x', rotation=35)
+
+# =========================================================
+# GRAPH 15 : COUNTRY VS ORDERS
+# =========================================================
+
+country_orders = df['country'].value_counts().head(10)
+
+axes[3, 2].bar(
+    country_orders.index,
+    country_orders.values
+)
+
+axes[3, 2].set_title("Country vs Orders", fontsize=16)
+
+axes[3, 2].tick_params(axis='x', rotation=35)
+
+# =========================================================
+# GRAPH 16 : PROJECT INFORMATION
+# =========================================================
+
+axes[3, 3].text(
+    0.1,
+    0.5,
+    "Business Relationship Analytics Dashboard\n\nDeveloped using:\nPython\nPandas\nMatplotlib\nSeaborn",
+    fontsize=18
+)
+
+axes[3, 3].axis('off')
+
+# ---------------------------------------------------------
+# GIVE MORE SPACE BETWEEN ALL GRAPHS
+# ---------------------------------------------------------
+
+plt.subplots_adjust(
+    top=0.93,
+    bottom=0.06,
+    left=0.04,
+    right=0.97,
+    hspace=0.60,
+    wspace=0.35
+)
+
+# ---------------------------------------------------------
+# FULL SCREEN WINDOW
+# ---------------------------------------------------------
+
+manager = plt.get_current_fig_manager()
+
+manager.window.state('zoomed')
+
+# ---------------------------------------------------------
+# SHOW DASHBOARD
+# ---------------------------------------------------------
+
+plt.show()
